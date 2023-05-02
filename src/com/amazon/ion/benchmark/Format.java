@@ -322,6 +322,12 @@ enum Format {
         throw new IllegalArgumentException("Unknown file format.");
     }
 
+    /**
+     * Convert the file to the desired format by given options
+     * @param optionsMap Map representing the options.
+     * @return the Path of the converted file.
+     * @throws IOException if thrown while reading the data.
+     */
     static Path convertInputFormat(Map<String, Object> optionsMap) throws IOException {
         Object results_file = optionsMap.get("--results-file");
         // Identify input file
@@ -336,9 +342,9 @@ enum Format {
             String outputFile = optionsMap.get("--results-file").toString();
             outputPath =  Paths.get(outputFile);
         }
-        // Create a temporary READ option object for converting files
+        // Create a convert combination option object for converting files
         OptionsMatrixBase optionsMatrixBase = OptionsMatrixBase.from(optionsMap);
-        OptionsCombinationBase optionsCombinationBase = OptionsCombinationBase.from(optionsMatrixBase.serializedOptionsCombinations[0]);
+        ConvertOptionsCombination optionsCombinationBase = (ConvertOptionsCombination) OptionsCombinationBase.from(optionsMatrixBase.serializedOptionsCombinations[0]);
         // Convert the input file
         return convert_format.convert(
                 inputFile,

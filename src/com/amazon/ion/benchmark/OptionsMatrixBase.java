@@ -498,7 +498,7 @@ abstract class OptionsMatrixBase {
         } else if (optionsMatrix.get("read").equals(true)) {
             matrix = new ReadOptionsMatrix(optionsMatrix);
         } else if (optionsMatrix.get("convert").equals(true)) {
-            matrix = new ReadOptionsMatrix(optionsMatrix);
+            matrix = new ConvertOptionsMatrix(optionsMatrix);
         } else {
             throw new IllegalArgumentException("Unknown command. Select from: write, read.");
         }

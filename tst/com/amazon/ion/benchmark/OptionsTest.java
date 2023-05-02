@@ -530,6 +530,54 @@ public class OptionsTest {
     }
 
     /**
+     * Asserts that a convert task executes as expected. This includes assertions that output file are created
+     * correctly, that conversions between formats are correct and happen only when expected.
+     * @param inputFileName the file to test.
+     * @param optionsCombination a combination of read command options.
+     * @param expectedFormat the format of the data that is expected to be tested.
+     * @param isConversionRequired false if the task is expected to be able to read the input file without conversion
+     *                             or copying; otherwise, false.
+     * @throws Exception if an unexpected error occurs.
+     */
+    private static void assertConvertTaskExecutesCorrectly(
+            String inputFileName,
+            ConvertOptionsCombination optionsCombination,
+            Format expectedFormat,
+            boolean isConversionRequired
+    ) throws Exception {
+        Path inputPath = fileInTestDirectory(inputFileName);
+
+//        convert_format.convert(
+//                inputFile,
+//                outputPath,
+//                optionsCombinationBase
+//        );
+
+        byte[] streamBytes = new byte[0];
+
+        if (expectedFormat.canParse(Format.classify(inputPath))) {
+            // If this is a conversion between two formats with the same data model (e.g. text Ion to binary Ion),
+            // then they should compare equivalent.
+            assertDataEquals(expectedFormat, inputPath.toFile(), streamBytes, optionsCombination);
+        }
+        if (Format.ION_BINARY.canParse(expectedFormat)) {
+            assertEquals(optionsCombination.importsForBenchmarkFile != null, streamIncludesImports(streamBytes));
+        } else {
+            assertNull(optionsCombination.importsForBenchmarkFile);
+        }
+        if (optionsCombination.importsForBenchmarkFile != null) {
+            assertImportsEqual(optionsCombination.importsForBenchmarkFile, streamBytes);
+        }
+
+        if (isConversionRequired && optionsCombination.ioType == IoType.FILE) {
+            // Conversion was required, so the inputFile is a trial-specific temporary file. Ensure it is deleted.
+            assertFalse(task.inputFile.exists());
+        }
+        // Verify that the original file was not deleted.
+        assertTrue(inputPath.toFile().exists());
+    }
+
+    /**
      * Parses a list of {@link OptionsCombinationBase} from the given arguments, which are identical to the arguments
      * that would be provided to an invocation of the CLI.
      * @param args the arguments from which to generate options combinations.
@@ -2028,5 +2076,21 @@ public class OptionsTest {
             );
         }
         assertTrue(expectedCombinations.isEmpty());
+    }
+
+    @Test
+    public void convertCborToJson() throws Exception {
+        ConvertOptionsCombination optionsCombination = parseSingleOptionsCombination(
+                "convert",
+                "--format",
+                "json",
+                "objects.cbor"
+        );
+        assertConvertTaskExecutesCorrectly(
+                "objects.cbor",
+                optionsCombination,
+                Format.JSON,
+                true
+        );
     }
 }
