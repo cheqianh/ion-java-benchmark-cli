@@ -5,6 +5,7 @@ import org.docopt.Docopt;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,7 @@ public class Main {
 
         + "  ion-java-benchmark compare (--benchmark-result-previous <file_path>) (--benchmark-result-new <file_path>) <output_file>\n"
 
-        + "  ion-java-benchmark convert (--format <type>) (--output-file <file_path>) <input_file>\n"
+        + "  ion-java-benchmark convert (--format <type>) [--results-file <file>] <input_file>\n"
 
         + "  ion-java-benchmark --help\n"
 
@@ -352,23 +353,8 @@ public class Main {
             } else if (optionsMap.get("compare").equals(true)) {
                 ParseAndCompareBenchmarkResults.compareResult(optionsMap);
             } else if (optionsMap.get("convert").equals(true)) {
-                Path outputPath =  Paths.get(optionsMap.get("--output-file").toString() + "_2");
-                Path inputFile = Paths.get(optionsMap.get("<input_file>").toString());
-
-                String convert_format_str = ((List<String>) optionsMap.get("--format")).get(0);
-                Format convert_format = Format.valueOf(convert_format_str.toUpperCase());
-                System.out.println(convert_format);
-
-                OptionsMatrixBase options_1 = OptionsMatrixBase.from(optionsMap);
-                OptionsCombinationBase options_2 = OptionsCombinationBase.from(options_1.serializedOptionsCombinations[0]);
-
-                convert_format.convert(
-                    inputFile,
-                    outputPath,
-                    options_2
-                );
-            }
-            else {
+                Format.convertInputFormat(optionsMap);
+            } else {
                 OptionsMatrixBase options = OptionsMatrixBase.from(optionsMap);
                 options.executeBenchmark();
             }

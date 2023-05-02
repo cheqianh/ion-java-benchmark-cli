@@ -7,7 +7,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Data formats, e.g. Ion binary and Ion text.
@@ -317,5 +320,30 @@ enum Format {
             return Format.JSON;
         }
         throw new IllegalArgumentException("Unknown file format.");
+    }
+
+    static Path convertInputFormat(Map<String, Object> optionsMap) throws IOException {
+        Object results_file = optionsMap.get("--results-file");
+        // Identify input file
+        String inputFileString = optionsMap.get("<input_file>").toString();
+        Path inputFile = Paths.get(inputFileString);
+        // Identify formats
+        String convert_format_str = ((List<String>) optionsMap.get("--format")).get(0);
+        Format convert_format = Format.valueOf(convert_format_str.toUpperCase());
+        // Identify output path
+        Path outputPath =  Paths.get(inputFile.toFile().getName().substring(0, inputFileString.lastIndexOf('.')) + convert_format.getSuffix());
+        if (results_file != null) {
+            String outputFile = optionsMap.get("--results-file").toString();
+            outputPath =  Paths.get(outputFile);
+        }
+        // Create a temporary READ option object for converting files
+        OptionsMatrixBase optionsMatrixBase = OptionsMatrixBase.from(optionsMap);
+        OptionsCombinationBase optionsCombinationBase = OptionsCombinationBase.from(optionsMatrixBase.serializedOptionsCombinations[0]);
+        // Convert the input file
+        return convert_format.convert(
+                inputFile,
+                outputPath,
+                optionsCombinationBase
+        );
     }
 }
