@@ -81,6 +81,7 @@ enum Format {
         @Override
         Path convert(Path input, Path output, OptionsCombinationBase options) throws IOException {
             Format sourceFormat = classify(input);
+
             switch (sourceFormat) {
                 case ION_TEXT:
                     if (options.limit == Integer.MAX_VALUE) {

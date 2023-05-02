@@ -58,7 +58,7 @@ abstract class OptionsMatrixBase {
     };
 
     private final String inputFile;
-    private final String[] serializedOptionsCombinations;
+    public final String[] serializedOptionsCombinations;
     private final boolean profile;
     private final Options jmhOptions;
 
@@ -496,6 +496,8 @@ abstract class OptionsMatrixBase {
         if (optionsMatrix.get("write").equals(true)) {
             matrix = new WriteOptionsMatrix(optionsMatrix);
         } else if (optionsMatrix.get("read").equals(true)) {
+            matrix = new ReadOptionsMatrix(optionsMatrix);
+        } else if (optionsMatrix.get("convert").equals(true)) {
             matrix = new ReadOptionsMatrix(optionsMatrix);
         } else {
             throw new IllegalArgumentException("Unknown command. Select from: write, read.");

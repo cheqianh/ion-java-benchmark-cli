@@ -2,6 +2,11 @@ package com.amazon.ion.benchmark;
 
 import org.docopt.Docopt;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class Main {
@@ -45,6 +50,8 @@ public class Main {
         + "  ion-java-benchmark run-suite (--test-ion-data <file_path>) (--benchmark-options-combinations <file_path>) <output_file>\n"
 
         + "  ion-java-benchmark compare (--benchmark-result-previous <file_path>) (--benchmark-result-new <file_path>) <output_file>\n"
+
+        + "  ion-java-benchmark convert (--format <type>) (--output-file <file_path>) <input_file>\n"
 
         + "  ion-java-benchmark --help\n"
 
@@ -242,7 +249,7 @@ public class Main {
 
         + "  -P --benchmark-result-previous <file_path>      This option will specify the path of benchmark result from the existing ion-java commit.\n"
 
-        + "  -X --benchmark-result-new <file_path>      This option will specify the path of benchmark result form the new ion-java commit.\n"
+        + "  -X --benchmark-result-new <file_path>      This option will specify the path of benchmark result from the new ion-java commit.\n"
 
         + "\n";
 
@@ -344,7 +351,24 @@ public class Main {
                 GenerateAndOrganizeBenchmarkResults.generateAndSaveBenchmarkResults(optionsMap);
             } else if (optionsMap.get("compare").equals(true)) {
                 ParseAndCompareBenchmarkResults.compareResult(optionsMap);
-            } else {
+            } else if (optionsMap.get("convert").equals(true)) {
+                Path outputPath =  Paths.get(optionsMap.get("--output-file").toString() + "_2");
+                Path inputFile = Paths.get(optionsMap.get("<input_file>").toString());
+
+                String convert_format_str = ((List<String>) optionsMap.get("--format")).get(0);
+                Format convert_format = Format.valueOf(convert_format_str.toUpperCase());
+                System.out.println(convert_format);
+
+                OptionsMatrixBase options_1 = OptionsMatrixBase.from(optionsMap);
+                OptionsCombinationBase options_2 = OptionsCombinationBase.from(options_1.serializedOptionsCombinations[0]);
+
+                convert_format.convert(
+                    inputFile,
+                    outputPath,
+                    options_2
+                );
+            }
+            else {
                 OptionsMatrixBase options = OptionsMatrixBase.from(optionsMap);
                 options.executeBenchmark();
             }

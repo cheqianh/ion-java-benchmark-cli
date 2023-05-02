@@ -60,6 +60,7 @@ final class TemporaryFiles {
      * @throws IOException if thrown while trying to create the file.
      */
     static Path newTempFile(String prefix, String suffix) throws IOException {
+        System.out.println("???");
         return Files.createTempFile(tempDirectory, prefix, suffix);
     }
 }
