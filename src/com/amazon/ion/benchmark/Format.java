@@ -339,7 +339,7 @@ enum Format {
         // Identify output path
         Path outputPath =  Paths.get(inputFile.toFile().getName().substring(0, inputFileString.lastIndexOf('.')) + convert_format.getSuffix());
         if (results_file != null) {
-            String outputFile = optionsMap.get("--results-file").toString();
+            String outputFile = results_file.toString();
             outputPath =  Paths.get(outputFile);
         }
         // Create a convert combination option object for converting files

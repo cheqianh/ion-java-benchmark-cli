@@ -22,5 +22,4 @@ public class ConvertOptionsMatrix extends OptionsMatrixBase {
     void parseCommandSpecificOptions(Map<String, Object> optionsMatrix, List<IonStruct> optionsCombinationStructs) {
         // no specific options for now
     }
-
 }

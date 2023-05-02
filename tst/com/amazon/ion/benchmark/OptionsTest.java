@@ -546,14 +546,21 @@ public class OptionsTest {
             boolean isConversionRequired
     ) throws Exception {
         Path inputPath = fileInTestDirectory(inputFileName);
+        Path outputPath = TemporaryFiles.newTempFile(inputPath.toFile().getName().substring(0, inputFileName.lastIndexOf('.')), expectedFormat.getSuffix());
+        System.out.println(outputPath);
+        expectedFormat.convert(
+                inputPath,
+                outputPath,
+                optionsCombination
+        );
 
-//        convert_format.convert(
-//                inputFile,
-//                outputPath,
-//                optionsCombinationBase
-//        );
-
-        byte[] streamBytes = new byte[0];
+        byte[] streamBytes;
+        if (expectedFormat.equals(Format.classify(inputPath))) {
+            assertTrue(!isConversionRequired);
+            streamBytes = Files.readAllBytes(inputPath);
+        } else {
+            streamBytes = Files.readAllBytes(outputPath);
+        }
 
         if (expectedFormat.canParse(Format.classify(inputPath))) {
             // If this is a conversion between two formats with the same data model (e.g. text Ion to binary Ion),
@@ -568,13 +575,11 @@ public class OptionsTest {
         if (optionsCombination.importsForBenchmarkFile != null) {
             assertImportsEqual(optionsCombination.importsForBenchmarkFile, streamBytes);
         }
-
-        if (isConversionRequired && optionsCombination.ioType == IoType.FILE) {
-            // Conversion was required, so the inputFile is a trial-specific temporary file. Ensure it is deleted.
-            assertFalse(task.inputFile.exists());
-        }
-        // Verify that the original file was not deleted.
+        // Verify that the original file and the output file were not deleted.
         assertTrue(inputPath.toFile().exists());
+        assertTrue(outputPath.toFile().exists());
+        // We verified that the output file exists. Clean up resources created for testing.
+        TemporaryFiles.cleanUpTempDirectory();
     }
 
     /**
@@ -2091,6 +2096,69 @@ public class OptionsTest {
                 optionsCombination,
                 Format.JSON,
                 true
+        );
+    }
+
+    @Test
+    public void convertJsonToCbor() throws Exception {
+        ConvertOptionsCombination optionsCombination = parseSingleOptionsCombination(
+                "convert",
+                "--format",
+                "cbor",
+                "objects.json"
+        );
+        assertConvertTaskExecutesCorrectly(
+                "objects.json",
+                optionsCombination,
+                Format.CBOR,
+                true
+        );
+    }
+
+    @Test
+    public void convertIonBinaryToCbor() throws Exception {
+        ConvertOptionsCombination optionsCombination = parseSingleOptionsCombination(
+                "convert",
+                "--format",
+                "cbor",
+                "textStructs.ion"
+        );
+        assertConvertTaskExecutesCorrectly(
+                "textStructs.ion",
+                optionsCombination,
+                Format.CBOR,
+                true
+        );
+    }
+    @Test
+    public void convertCborToCbor() throws Exception {
+        ConvertOptionsCombination optionsCombination = parseSingleOptionsCombination(
+                "convert",
+                "--format",
+                "cbor",
+                "objects.cbor"
+        );
+        assertConvertTaskExecutesCorrectly(
+                "objects.cbor",
+                optionsCombination,
+                Format.CBOR,
+                false
+        );
+    }
+
+    @Test
+    public void convertIonTextToIonText() throws Exception {
+        ConvertOptionsCombination optionsCombination = parseSingleOptionsCombination(
+                "convert",
+                "--format",
+                "ion_text",
+                "textStructs.ion"
+        );
+        assertConvertTaskExecutesCorrectly(
+                "textStructs.ion",
+                optionsCombination,
+                Format.ION_TEXT,
+                false
         );
     }
 }

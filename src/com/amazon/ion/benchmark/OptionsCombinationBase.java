@@ -128,6 +128,8 @@ abstract class OptionsCombinationBase {
             options = new ReadOptionsCombination(optionsIon);
         } else if (firstAnnotation.equals("write")) {
             options = new WriteOptionsCombination(optionsIon);
+        } else if (firstAnnotation.equals("convert")) {
+            options = new ConvertOptionsCombination(optionsIon);
         } else {
             throw new IllegalArgumentException("Malformed options: must be annotated with the command name.");
         }
