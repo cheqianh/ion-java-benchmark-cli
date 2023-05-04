@@ -58,7 +58,8 @@ abstract class OptionsMatrixBase {
     };
 
     private final String inputFile;
-    public final String[] serializedOptionsCombinations;
+
+    private final String[] serializedOptionsCombinations;
     private final boolean profile;
     private final Options jmhOptions;
 

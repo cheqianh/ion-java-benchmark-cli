@@ -343,8 +343,8 @@ enum Format {
             outputPath =  Paths.get(outputFile);
         }
         // Create a convert combination option object for converting files
-        OptionsMatrixBase optionsMatrixBase = OptionsMatrixBase.from(optionsMap);
-        ConvertOptionsCombination optionsCombinationBase = (ConvertOptionsCombination) OptionsCombinationBase.from(optionsMatrixBase.serializedOptionsCombinations[0]);
+        ConvertOptionsMatrix optionsMatrixBase = (ConvertOptionsMatrix) OptionsMatrixBase.from(optionsMap);
+        ConvertOptionsCombination optionsCombinationBase = (ConvertOptionsCombination) OptionsCombinationBase.from(optionsMatrixBase.getSerializedOptionsCombinations()[0]);
         // Convert the input file
         return convert_format.convert(
                 inputFile,
