@@ -7,7 +7,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Data formats, e.g. Ion binary and Ion text.
@@ -81,6 +84,7 @@ enum Format {
         @Override
         Path convert(Path input, Path output, OptionsCombinationBase options) throws IOException {
             Format sourceFormat = classify(input);
+
             switch (sourceFormat) {
                 case ION_TEXT:
                     if (options.limit == Integer.MAX_VALUE) {
@@ -316,5 +320,36 @@ enum Format {
             return Format.JSON;
         }
         throw new IllegalArgumentException("Unknown file format.");
+    }
+
+    /**
+     * Convert the file to the desired format by given options
+     * @param optionsMap Map representing the options.
+     * @return the Path of the converted file.
+     * @throws IOException if thrown while reading the data.
+     */
+    static Path convertInputFormat(Map<String, Object> optionsMap) throws IOException {
+        Object results_file = optionsMap.get("--results-file");
+        // Identify input file
+        String inputFileString = optionsMap.get("<input_file>").toString();
+        Path inputFile = Paths.get(inputFileString);
+        // Identify formats
+        String convert_format_str = ((List<String>) optionsMap.get("--format")).get(0);
+        Format convert_format = Format.valueOf(convert_format_str.toUpperCase());
+        // Identify output path
+        Path outputPath =  Paths.get(inputFile.toFile().getName().substring(0, inputFileString.lastIndexOf('.')) + convert_format.getSuffix());
+        if (results_file != null) {
+            String outputFile = results_file.toString();
+            outputPath =  Paths.get(outputFile);
+        }
+        // Create a convert combination option object for converting files
+        ConvertOptionsMatrix optionsMatrixBase = (ConvertOptionsMatrix) OptionsMatrixBase.from(optionsMap);
+        ConvertOptionsCombination optionsCombinationBase = (ConvertOptionsCombination) OptionsCombinationBase.from(optionsMatrixBase.getSerializedOptionsCombinations()[0]);
+        // Convert the input file
+        return convert_format.convert(
+                inputFile,
+                outputPath,
+                optionsCombinationBase
+        );
     }
 }

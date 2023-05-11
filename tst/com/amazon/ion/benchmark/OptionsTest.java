@@ -530,6 +530,59 @@ public class OptionsTest {
     }
 
     /**
+     * Asserts that a convert task executes as expected. This includes assertions that output file are created
+     * correctly, that conversions between formats are correct and happen only when expected.
+     * @param inputFileName the file to test.
+     * @param optionsCombination a combination of read command options.
+     * @param expectedFormat the format of the data that is expected to be tested.
+     * @param isConversionRequired false if the task is expected to be able to read the input file without conversion
+     *                             or copying; otherwise, false.
+     * @throws Exception if an unexpected error occurs.
+     */
+    private static void assertConvertTaskExecutesCorrectly(
+            String inputFileName,
+            ConvertOptionsCombination optionsCombination,
+            Format expectedFormat,
+            boolean isConversionRequired
+    ) throws Exception {
+        Path inputPath = fileInTestDirectory(inputFileName);
+        Path outputPath = TemporaryFiles.newTempFile(inputPath.toFile().getName().substring(0, inputFileName.lastIndexOf('.')), expectedFormat.getSuffix());
+        System.out.println(outputPath);
+        expectedFormat.convert(
+                inputPath,
+                outputPath,
+                optionsCombination
+        );
+
+        byte[] streamBytes;
+        if (expectedFormat.equals(Format.classify(inputPath))) {
+            assertTrue(!isConversionRequired);
+            streamBytes = Files.readAllBytes(inputPath);
+        } else {
+            streamBytes = Files.readAllBytes(outputPath);
+        }
+
+        if (expectedFormat.canParse(Format.classify(inputPath))) {
+            // If this is a conversion between two formats with the same data model (e.g. text Ion to binary Ion),
+            // then they should compare equivalent.
+            assertDataEquals(expectedFormat, inputPath.toFile(), streamBytes, optionsCombination);
+        }
+        if (Format.ION_BINARY.canParse(expectedFormat)) {
+            assertEquals(optionsCombination.importsForBenchmarkFile != null, streamIncludesImports(streamBytes));
+        } else {
+            assertNull(optionsCombination.importsForBenchmarkFile);
+        }
+        if (optionsCombination.importsForBenchmarkFile != null) {
+            assertImportsEqual(optionsCombination.importsForBenchmarkFile, streamBytes);
+        }
+        // Verify that the original file and the output file were not deleted.
+        assertTrue(inputPath.toFile().exists());
+        assertTrue(outputPath.toFile().exists());
+        // We verified that the output file exists. Clean up resources created for testing.
+        TemporaryFiles.cleanUpTempDirectory();
+    }
+
+    /**
      * Parses a list of {@link OptionsCombinationBase} from the given arguments, which are identical to the arguments
      * that would be provided to an invocation of the CLI.
      * @param args the arguments from which to generate options combinations.
@@ -2028,5 +2081,84 @@ public class OptionsTest {
             );
         }
         assertTrue(expectedCombinations.isEmpty());
+    }
+
+    @Test
+    public void convertCborToJson() throws Exception {
+        ConvertOptionsCombination optionsCombination = parseSingleOptionsCombination(
+                "convert",
+                "--format",
+                "json",
+                "objects.cbor"
+        );
+        assertConvertTaskExecutesCorrectly(
+                "objects.cbor",
+                optionsCombination,
+                Format.JSON,
+                true
+        );
+    }
+
+    @Test
+    public void convertJsonToCbor() throws Exception {
+        ConvertOptionsCombination optionsCombination = parseSingleOptionsCombination(
+                "convert",
+                "--format",
+                "cbor",
+                "objects.json"
+        );
+        assertConvertTaskExecutesCorrectly(
+                "objects.json",
+                optionsCombination,
+                Format.CBOR,
+                true
+        );
+    }
+
+    @Test
+    public void convertIonBinaryToCbor() throws Exception {
+        ConvertOptionsCombination optionsCombination = parseSingleOptionsCombination(
+                "convert",
+                "--format",
+                "cbor",
+                "textStructs.ion"
+        );
+        assertConvertTaskExecutesCorrectly(
+                "textStructs.ion",
+                optionsCombination,
+                Format.CBOR,
+                true
+        );
+    }
+    @Test
+    public void convertCborToCbor() throws Exception {
+        ConvertOptionsCombination optionsCombination = parseSingleOptionsCombination(
+                "convert",
+                "--format",
+                "cbor",
+                "objects.cbor"
+        );
+        assertConvertTaskExecutesCorrectly(
+                "objects.cbor",
+                optionsCombination,
+                Format.CBOR,
+                false
+        );
+    }
+
+    @Test
+    public void convertIonTextToIonText() throws Exception {
+        ConvertOptionsCombination optionsCombination = parseSingleOptionsCombination(
+                "convert",
+                "--format",
+                "ion_text",
+                "textStructs.ion"
+        );
+        assertConvertTaskExecutesCorrectly(
+                "textStructs.ion",
+                optionsCombination,
+                Format.ION_TEXT,
+                false
+        );
     }
 }
